@@ -103,6 +103,7 @@ The application is prepared for integration with Firebase to manage sequences an
 - Stores sequence data including steps, results, and metadata
 - Manages visualizer presets, parameters, and user-created visualizations
 - Handles user preferences and settings
+- Houses the unified media library for all content types
 
 ### Firebase Storage
 - Stores media assets including thumbnails, audio files, and video content
@@ -119,6 +120,7 @@ The application is structured to interact with Firebase through service modules:
 - `lib/firebase/config.ts`: Firebase initialization and configuration
 - `lib/firebase/services/sequence-service.ts`: Functions for managing sequence data
 - `lib/firebase/services/visualizer-service.ts`: Functions for managing visualizer data
+- `lib/firebase/services/media-service.ts`: Functions for managing unified media content
 - `lib/firebase/firebase-provider.tsx`: React context provider for Firebase services
 
 To use Firebase services in components:
@@ -127,7 +129,7 @@ To use Firebase services in components:
 import { useFirebase } from '@/lib/firebase/firebase-provider';
 
 function MyComponent() {
-  const { sequenceService, visualizerService } = useFirebase();
+  const { sequenceService, visualizerService, mediaService } = useFirebase();
   
   const loadSequences = async () => {
     const sequences = await sequenceService.getAllSequences();
@@ -144,8 +146,59 @@ The application uses TypeScript interfaces to define the structure of data:
 
 - `types/sequence.ts`: Defines the structure of sequence data
 - `types/visualizer.ts`: Defines the structure of visualizer data
+- `types/media.ts`: Defines the structure of unified media content
 
 These interfaces ensure type safety when working with Firebase data throughout the application.
+
+## Media Service
+
+### Unified Media Library
+
+The application includes a unified media service that handles various types of media content:
+
+1. **Local Files** - Uploaded directly to Firebase Storage
+2. **YouTube Videos** - Referenced by URL, with automatic ID extraction
+3. **External URLs** - Links to media hosted on other platforms
+
+### Media Service Features
+
+The media service (`lib/firebase/services/media-service.ts`) provides functionality for:
+
+- Managing media metadata in Firestore
+- Uploading files to Firebase Storage
+- Categorizing and tagging media content
+- Filtering media by source, category, or tags
+- Supporting YouTube URL integration
+
+### Firebase Setup for Media Service
+
+To use the media service, configure Firebase with the following collections:
+
+1. **media** - Main collection for all media items with fields:
+   - Standard fields: id, title, description, createdAt, updatedAt
+   - Source identifier: "youtube", "firebase_storage", or "external_url"
+   - URL field containing the media location
+   - Metadata specific to each media type
+
+2. **media-categories** - Collection for organizing media:
+   - Name and description fields
+   - Optional count field for tracking items per category
+
+### Environment Variables
+
+The following environment variables should be set in a `.env.local` file:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your-measurement-id
+```
+
+These credentials can be obtained from the Firebase console after creating a project.
 
 ## File Structure
 

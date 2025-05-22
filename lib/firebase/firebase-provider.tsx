@@ -8,6 +8,7 @@ import { createContext, useContext, type ReactNode } from "react"
 import { app, db, storage, auth } from "./config"
 import * as sequenceService from "./services/sequence-service"
 import * as visualizerService from "./services/visualizer-service"
+import * as mediaService from "./services/media-service"
 
 // Create context
 interface FirebaseContextType {
@@ -17,6 +18,7 @@ interface FirebaseContextType {
   auth: any
   sequenceService: typeof sequenceService
   visualizerService: typeof visualizerService
+  mediaService: typeof mediaService
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined)
@@ -34,6 +36,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({ children }) 
     auth,
     sequenceService,
     visualizerService,
+    mediaService,
   }
 
   return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>
