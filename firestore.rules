@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // LAZY AUTHORIZATION RULES
+    // Phase 1: Open access for seamless browsing experience
+    // TODO: Gradually add authentication requirements for write operations
+    
+    // Helper functions for future use
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAnonymous() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+    
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    function isValidMediaItem() {
+      return request.resource.data.keys().hasAll(['title', 'type', 'source']) &&
+             request.resource.data.title is string &&
+             request.resource.data.title.size() > 0 &&
+             request.resource.data.type in ['audio', 'video', 'image', 'text', 'link', 'playlist', 'document', 'pdf', 'ebook'] &&
+             request.resource.data.source in ['firebase_storage', 'youtube', 'spotify', 'external_url', 'soundcloud', 'vimeo', 'instagram'] &&
+             request.resource.data.visibility in ['public', 'private', 'unlisted'] &&
+             request.resource.data.status in ['draft', 'published', 'archived', 'processing'];
+    }
+    
+    // Users collection - open for now, will add auth later
+    match /users/{userId} {
+      allow read: if true; // Anyone can read user profiles
+      allow write: if true; // Open writes for now - TODO: add auth requirement
+    }
+    
+    // Media collection - completely open for lazy auth experience
+    match /media/{mediaId} {
+      // Allow anyone to read media items (core browsing experience)
+      allow read: if true;
+      
+      // Allow anyone to create/update media items for now
+      // TODO: Phase 2 - require authentication for writes
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
+    }
+    
+    // Test collections - open access
+    match /test/{document=**} {
+      allow read, write: if true;
+    }
+    
+    // Search and analytics collections - open reads
+    match /searches/{document=**} {
+      allow read: if true;
+      allow write: if true; // TODO: Phase 2 - require auth for writes
+    }
+    
+    match /analytics/{document=**} {
+      allow read: if true;
+      allow write: if true; // TODO: Phase 2 - require auth for writes
+    }
+    
+    // Default: Allow all access for lazy auth phase
+    // TODO: Phase 3 - Restrict to authenticated users only
+    match /{document=**} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+} 

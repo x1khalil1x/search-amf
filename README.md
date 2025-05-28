@@ -62,6 +62,7 @@ Beyond search, the platform serves as a comprehensive content management system 
 - **Framer Motion**: Animation library for smooth transitions
 - **Lucide Icons**: Consistent iconography throughout the app
 - **shadcn/ui**: Component library for consistent UI elements
+- **Firebase**: Backend services for data storage and authentication
 
 ### Key Features
 
@@ -97,115 +98,156 @@ Beyond search, the platform serves as a comprehensive content management system 
 
 ## Firebase Integration
 
-The application is prepared for integration with Firebase to manage sequences and visualizer data. The following Firebase services are utilized:
+The application is fully integrated with Firebase for backend services. The Firebase setup includes:
 
-### Firestore Database
-- Stores sequence data including steps, results, and metadata
-- Manages visualizer presets, parameters, and user-created visualizations
-- Handles user preferences and settings
-- Houses the unified media library for all content types
+### Current Firebase Project
+- **Project ID**: `amf-track-hub-7ce80`
+- **Environment**: Production-ready configuration
+- **Status**: ✅ Connected and operational
 
-### Firebase Storage
-- Stores media assets including thumbnails, audio files, and video content
-- Manages user-uploaded content for visualizers and sequences
+### Firebase Services
 
-### Firebase Authentication
-- Handles user authentication and authorization
-- Manages user roles and permissions
+#### Firestore Database
+- **Collection**: `media` - Unified media library for all content types
+- **Features**: Real-time data synchronization, offline support
+- **Data Types**: Audio, video, images, and external media links
+- **Indexing**: Optimized queries for filtering and search
 
-### Integration Points
+#### Firebase Storage
+- **Purpose**: Media asset storage (thumbnails, audio files, video content)
+- **Organization**: Structured folder hierarchy for different media types
+- **Security**: Rules-based access control
 
-The application is structured to interact with Firebase through service modules:
+#### Firebase Authentication
+- **Methods**: Anonymous authentication for demo purposes
+- **Future**: Ready for email/password and social login integration
+- **Permissions**: Role-based access control ready
 
-- `lib/firebase/config.ts`: Firebase initialization and configuration
-- `lib/firebase/services/sequence-service.ts`: Functions for managing sequence data
-- `lib/firebase/services/visualizer-service.ts`: Functions for managing visualizer data
-- `lib/firebase/services/media-service.ts`: Functions for managing unified media content
-- `lib/firebase/firebase-provider.tsx`: React context provider for Firebase services
+### Firebase Configuration
 
-To use Firebase services in components:
+The application uses environment variables for Firebase configuration. Create a `.env.local` file with:
 
-\`\`\`tsx
+```env
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
+NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
+# NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your-measurement-id (optional)
+```
+
+### Firebase Service Architecture
+
+The application uses a modular service architecture for Firebase integration:
+
+```
+lib/firebase/
+├── config.ts                    # Firebase initialization and configuration
+├── services/
+│   ├── media-service.ts         # Comprehensive media management
+│   └── simple-media-service.ts  # Simplified media operations
+└── firebase-provider.tsx        # React context provider
+```
+
+#### Key Service Features
+
+**Media Service** (`lib/firebase/services/media-service.ts`):
+- CRUD operations for media items
+- Support for multiple media sources (YouTube, Firebase Storage, External URLs)
+- Advanced filtering and search capabilities
+- Analytics tracking (views, likes, downloads)
+- Batch operations for bulk management
+
+**Simple Media Service** (`lib/firebase/services/simple-media-service.ts`):
+- Streamlined operations for basic use cases
+- Server-side data fetching for better performance
+- Connection diagnostics and testing utilities
+
+### Usage Examples
+
+```tsx
+// Using Firebase services in components
 import { useFirebase } from '@/lib/firebase/firebase-provider';
 
-function MyComponent() {
-  const { sequenceService, visualizerService, mediaService } = useFirebase();
+function MediaComponent() {
+  const { mediaService } = useFirebase();
   
-  const loadSequences = async () => {
-    const sequences = await sequenceService.getAllSequences();
-    // Use sequences data
+  const loadMedia = async () => {
+    const media = await mediaService.getAllMedia();
+    setMediaItems(media);
   };
   
-  // Component implementation
+  const addMedia = async (mediaData) => {
+    await mediaService.addMediaItem(mediaData);
+    // Refresh media list
+  };
 }
-\`\`\`
+```
 
 ### Data Models
 
-The application uses TypeScript interfaces to define the structure of data:
+TypeScript interfaces ensure type safety throughout the application:
 
-- `types/sequence.ts`: Defines the structure of sequence data
-- `types/visualizer.ts`: Defines the structure of visualizer data
-- `types/media.ts`: Defines the structure of unified media content
+- `types/media.ts`: Comprehensive media item structure
+- `types/simple-media.ts`: Simplified media interfaces
 
-These interfaces ensure type safety when working with Firebase data throughout the application.
+### Firebase Setup Instructions
+
+1. **Create Firebase Project**: Visit [Firebase Console](https://console.firebase.google.com)
+2. **Enable Services**: 
+   - Firestore Database
+   - Firebase Storage
+   - Authentication (Anonymous)
+3. **Configure Security Rules**: Use provided `firestore.rules` and `firestore.indexes.json`
+4. **Get Configuration**: Copy config from Project Settings > General > Your apps
+5. **Update Environment**: Add credentials to `.env.local`
+6. **Deploy Rules**: Run `firebase deploy --only firestore:rules,firestore:indexes`
+
+### Admin Tools
+
+The application includes comprehensive admin tools for Firebase management:
+
+- **Database Viewer** (`/admin/database`): Real-time Firestore collection browser
+- **Connection Diagnostics** (`/admin/firebase-diagnostic`): Firebase connectivity testing
+- **Content Management** (`/admin/content`): Media library management interface
+
+### Testing and Diagnostics
+
+Built-in tools for Firebase testing:
+
+- **Connection Tests**: Verify Firebase connectivity and authentication
+- **Data Validation**: Ensure data integrity and proper schema
+- **Performance Monitoring**: Track query performance and optimization opportunities
 
 ## Media Service
 
 ### Unified Media Library
 
-The application includes a unified media service that handles various types of media content:
+The media service handles various content types through a unified interface:
 
-1. **Local Files** - Uploaded directly to Firebase Storage
-2. **YouTube Videos** - Referenced by URL, with automatic ID extraction
-3. **External URLs** - Links to media hosted on other platforms
+1. **YouTube Videos** - Automatic ID extraction and metadata fetching
+2. **Firebase Storage** - Direct file uploads with automatic optimization
+3. **External URLs** - Support for third-party media hosting
+4. **Local Files** - Upload and management through Firebase Storage
 
-### Media Service Features
+### Media Categories and Organization
 
-The media service (`lib/firebase/services/media-service.ts`) provides functionality for:
-
-- Managing media metadata in Firestore
-- Uploading files to Firebase Storage
-- Categorizing and tagging media content
-- Filtering media by source, category, or tags
-- Supporting YouTube URL integration
-
-### Firebase Setup for Media Service
-
-To use the media service, configure Firebase with the following collections:
-
-1. **media** - Main collection for all media items with fields:
-   - Standard fields: id, title, description, createdAt, updatedAt
-   - Source identifier: "youtube", "firebase_storage", or "external_url"
-   - URL field containing the media location
-   - Metadata specific to each media type
-
-2. **media-categories** - Collection for organizing media:
-   - Name and description fields
-   - Optional count field for tracking items per category
-
-### Environment Variables
-
-The following environment variables should be set in a `.env.local` file:
-
-```
-NEXT_PUBLIC_FIREBASE_API_KEY=your-api-key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
-NEXT_PUBLIC_FIREBASE_APP_ID=your-app-id
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your-measurement-id
-```
-
-These credentials can be obtained from the Firebase console after creating a project.
+- **Type-based filtering**: Audio, video, image, text content
+- **Source-based organization**: YouTube, Firebase Storage, external
+- **Tag system**: Flexible categorization and search
+- **Visibility controls**: Public, private, and draft content states
 
 ## File Structure
 
-\`\`\`
+```
 search-amf/
 ├── app/                    # Next.js App Router pages
-│   ├── admin/              # Admin interface
+│   ├── admin/              # Admin interface with Firebase tools
+│   │   ├── database/       # Firestore collection browser
+│   │   ├── content/        # Media management interface
+│   │   └── firebase-diagnostic/ # Connection testing
 │   ├── results/            # Search results page
 │   ├── sequence/           # Sequence playback
 │   ├── studio/             # Studio interface
@@ -218,10 +260,61 @@ search-amf/
 │   ├── ui/                 # UI components (shadcn)
 │   ├── custom-cursor.tsx   # Custom cursor implementation
 │   └── video-viewer.tsx    # Video player component
+├── lib/firebase/           # Firebase integration
+│   ├── config.ts           # Firebase configuration
+│   ├── services/           # Firebase service modules
+│   └── firebase-provider.tsx # React context provider
+├── types/                  # TypeScript type definitions
+├── scripts/                # Utility scripts
+│   └── add-test-data.js    # Firebase test data seeding
 ├── public/                 # Static assets
-│   └── images/             # Image assets
+├── firebase.json           # Firebase project configuration
+├── firestore.rules         # Firestore security rules
+├── firestore.indexes.json  # Firestore index configuration
 └── styles/                 # Global styles
-\`\`\`
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+ 
+- npm or pnpm
+- Firebase account
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd search-amf
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Firebase**
+   - Create a Firebase project
+   - Copy configuration to `.env.local`
+   - Deploy Firestore rules: `firebase deploy --only firestore`
+
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Verify Firebase connection**
+   - Visit `http://localhost:3000/admin/database`
+   - Check connection status and test data operations
+
+### Adding Test Data
+
+Use the included script to populate your Firebase database with sample media:
+
+```bash
+node scripts/add-test-data.js
+```
 
 ## Design System
 
@@ -251,38 +344,35 @@ search-amf/
 - **Inputs**: Dark backgrounds with light text
 - **Navigation**: Subtle indicators for current state
 
-## Guidelines for New Development
+## Development Guidelines
 
-### Creating New Pages
+### Firebase Best Practices
+1. **Environment Variables**: Always use environment variables for Firebase config
+2. **Error Handling**: Implement comprehensive error handling for Firebase operations
+3. **Caching**: Use Next.js caching strategies for Firebase data
+4. **Security**: Follow Firebase security rules best practices
+5. **Performance**: Optimize queries and use pagination for large datasets
+
+### Creating New Features
 1. Follow the established dark aesthetic
 2. Maintain consistent spacing and component usage
 3. Implement smooth transitions between states
 4. Ensure responsive design for all viewport sizes
+5. Add proper Firebase integration where needed
 
-### Adding New Components
-1. Use the existing component library when possible
-2. Follow the established design patterns
-3. Implement consistent hover and focus states
-4. Document component props and usage
-
-### Extending Functionality
-1. Maintain separation of concerns
-2. Follow the established state management patterns
-3. Implement proper error handling
-4. Ensure performance optimization
-
-### Visual Effects
-1. Use subtle animations that enhance usability
-2. Maintain consistent motion patterns
-3. Ensure animations are performant
-4. Provide static alternatives for reduced motion preferences
+### Testing Firebase Integration
+- Use the admin diagnostic tools for connection testing
+- Verify data operations through the database viewer
+- Test offline functionality and error states
+- Monitor performance through Firebase console
 
 ## Performance Considerations
 
 - Lazy loading for non-critical components
-- Optimized image loading
+- Optimized image loading with Firebase Storage
 - Efficient animation implementations
 - Strategic code splitting
+- Firebase query optimization and caching
 
 ## Accessibility
 
@@ -294,4 +384,4 @@ search-amf/
 
 ---
 
-This README serves as a comprehensive guide to understanding the Search.AMF application, its design principles, and implementation details. By following these guidelines, developers can maintain consistency while extending the application with new features and improvements.
+This README serves as a comprehensive guide to the Search.AMF application with its complete Firebase integration. The application is production-ready with a robust backend infrastructure supporting real-time data operations, media management, and user authentication.
